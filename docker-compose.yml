@@ -1,0 +1,17 @@
+services:
+  research-flow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: research-flow:latest
+    container_name: research-flow-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NITRO_PORT=3000
+      - NITRO_HOST=0.0.0.0
+      - NUXT_PUBLIC_SUPABASE_URL=${NUXT_PUBLIC_SUPABASE_URL:-}
+      - NUXT_PUBLIC_SUPABASE_ANON_KEY=${NUXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      - NUXT_PUBLIC_GIT_REPO_URL=${NUXT_PUBLIC_GIT_REPO_URL:-}
