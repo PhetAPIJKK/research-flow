@@ -4,9 +4,12 @@ import type { ResearchFile } from '~/types/research'
 const DB_NAME = 'research-flow'
 const STORE = 'blobs'
 const META_KEY = 'rf_files'
-const DEFAULT_CATEGORIES = ['ร่างบทความ', 'วรรณกรรม', 'การทดลอง', 'เอกสารอื่นๆ']
+const CAT_KEY = 'rf_categories'
+export const FALLBACK_CATEGORY = 'เอกสารอื่นๆ'
+const DEFAULT_CATEGORIES = ['ร่างบทความ', 'วรรณกรรม', 'การทดลอง', FALLBACK_CATEGORY]
 
 const files = ref<ResearchFile[]>([])
+const categoryList = ref<string[]>([...DEFAULT_CATEGORIES])
 const loaded = ref(false)
 
 const openDb = (): Promise<IDBDatabase> =>
@@ -31,6 +34,10 @@ const saveMeta = () => {
   localStorage.setItem(META_KEY, JSON.stringify(files.value))
 }
 
+const saveCategories = () => {
+  localStorage.setItem(CAT_KEY, JSON.stringify(categoryList.value))
+}
+
 export const useFiles = () => {
   const init = () => {
     if (loaded.value || typeof window === 'undefined') return
@@ -40,12 +47,68 @@ export const useFiles = () => {
     } catch {
       files.value = []
     }
+    try {
+      const rawCat = localStorage.getItem(CAT_KEY)
+      if (rawCat) categoryList.value = JSON.parse(rawCat)
+    } catch {
+      categoryList.value = [...DEFAULT_CATEGORIES]
+    }
+    // keep categories used by existing files + the fallback category always present
+    const used = files.value.map(f => f.category)
+    categoryList.value = Array.from(new Set([...categoryList.value, ...used, FALLBACK_CATEGORY]))
     loaded.value = true
   }
 
-  const categories = computed(() =>
-    Array.from(new Set([...DEFAULT_CATEGORIES, ...files.value.map(f => f.category)]))
-  )
+  const categories = computed(() => categoryList.value)
+
+  const fileCount = (category: string) => files.value.filter(f => f.category === category).length
+
+  const addCategory = (name: string): string | null => {
+    const n = name.trim()
+    if (!n) return 'กรุณาระบุชื่อหมวดหมู่'
+    if (categoryList.value.includes(n)) return 'มีหมวดหมู่นี้อยู่แล้ว'
+    categoryList.value.push(n)
+    saveCategories()
+    return null
+  }
+
+  const renameCategory = (oldName: string, newName: string): string | null => {
+    const n = newName.trim()
+    if (oldName === FALLBACK_CATEGORY) return `ไม่สามารถเปลี่ยนชื่อหมวด "${FALLBACK_CATEGORY}"`
+    if (!n) return 'กรุณาระบุชื่อหมวดหมู่'
+    if (n === oldName) return null
+    if (categoryList.value.includes(n)) return 'มีหมวดหมู่นี้อยู่แล้ว'
+    categoryList.value = categoryList.value.map(c => (c === oldName ? n : c))
+    files.value.forEach(f => {
+      if (f.category === oldName) f.category = n
+    })
+    saveCategories()
+    saveMeta()
+    return null
+  }
+
+  // files in the deleted category are moved to the fallback category (never deleted)
+  const deleteCategory = (name: string): string | null => {
+    if (name === FALLBACK_CATEGORY) return `ไม่สามารถลบหมวด "${FALLBACK_CATEGORY}"`
+    categoryList.value = categoryList.value.filter(c => c !== name)
+    files.value.forEach(f => {
+      if (f.category === name) f.category = FALLBACK_CATEGORY
+    })
+    saveCategories()
+    saveMeta()
+    return null
+  }
+
+  const moveFile = (id: string, category: string) => {
+    const f = files.value.find(x => x.id === id)
+    if (!f) return
+    f.category = category
+    if (!categoryList.value.includes(category)) {
+      categoryList.value.push(category)
+      saveCategories()
+    }
+    saveMeta()
+  }
 
   // pinned first, then newest first
   const sortedFiles = computed(() =>
@@ -102,7 +165,10 @@ export const useFiles = () => {
     saveMeta()
   }
 
-  return { files, sortedFiles, categories, init, addFile, getBlob, togglePin, removeFile, clearAll }
+  return {
+    files, sortedFiles, categories, init, addFile, getBlob, togglePin, removeFile, clearAll,
+    fileCount, addCategory, renameCategory, deleteCategory, moveFile
+  }
 }
 
 export const formatSize = (bytes: number) =>

@@ -1,11 +1,46 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 const route = useRoute()
-const { files, sortedFiles, categories, addFile, getBlob, togglePin, removeFile } = useFiles()
+const {
+  files, sortedFiles, categories, addFile, getBlob, togglePin, removeFile,
+  fileCount, addCategory, renameCategory, deleteCategory, moveFile
+} = useFiles()
 const supabase = useSupabaseSync()
 
 const NEW_CATEGORY = '__new__'
+const FALLBACK = FALLBACK_CATEGORY
+
+// category manager
+const showManager = ref(false)
+const newCatName = ref('')
+const catError = ref('')
+const editing = ref<string | null>(null)
+const editName = ref('')
+
+const submitNewCategory = () => {
+  catError.value = addCategory(newCatName.value) || ''
+  if (!catError.value) newCatName.value = ''
+}
+
+const startEdit = (name: string) => {
+  editing.value = name
+  editName.value = name
+  catError.value = ''
+}
+
+const confirmEdit = () => {
+  if (!editing.value) return
+  catError.value = renameCategory(editing.value, editName.value) || ''
+  if (!catError.value) editing.value = null
+}
+
+const removeCategory = (name: string) => {
+  const n = fileCount(name)
+  const msg = n ? `ลบหมวด "${name}" ? ไฟล์ ${n} ไฟล์จะถูกย้ายไป "เอกสารอื่นๆ"` : `ลบหมวด "${name}" ?`
+  if (!confirm(msg)) return
+  catError.value = deleteCategory(name) || ''
+}
 
 const selectedId = ref<string | null>(null)
 const search = ref('')
@@ -97,6 +132,7 @@ const cancelUpload = () => {
 const save = async () => {
   if (!pending.value) return
   const category = form.value.category === NEW_CATEGORY ? form.value.newCategory.trim() : form.value.category
+  if (category && form.value.category === NEW_CATEGORY) addCategory(category)
   if (!category) {
     error.value = 'กรุณาระบุชื่อหมวดหมู่'
     return
@@ -201,11 +237,39 @@ const remove = async () => {
               <button class="px-3 py-1 rounded-md" :class="groupMode === 'category' ? 'bg-white shadow-sm font-medium' : 'text-zinc-600'" @click="groupMode = 'category'">จัดกลุ่ม</button>
               <button class="px-3 py-1 rounded-md" :class="groupMode === 'none' ? 'bg-white shadow-sm font-medium' : 'text-zinc-600'" @click="groupMode = 'none'">ทั้งหมด</button>
             </div>
-            <button
-              class="text-xs px-2 py-1 rounded-md"
-              :class="pinnedOnly ? 'bg-amber-100 text-amber-800 font-medium' : 'text-zinc-500 hover:bg-zinc-100'"
-              @click="pinnedOnly = !pinnedOnly"
-            >📌 เฉพาะที่ปักหมุด</button>
+            <div class="flex items-center gap-1">
+              <button
+                class="text-xs px-2 py-1 rounded-md"
+                :class="pinnedOnly ? 'bg-amber-100 text-amber-800 font-medium' : 'text-zinc-500 hover:bg-zinc-100'"
+                @click="pinnedOnly = !pinnedOnly"
+              >📌 เฉพาะที่ปักหมุด</button>
+              <button
+                class="text-xs px-2 py-1 rounded-md"
+                :class="showManager ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'"
+                @click="showManager = !showManager; catError = ''"
+              >⚙ หมวดหมู่</button>
+            </div>
+          </div>
+
+          <!-- Category manager -->
+          <div v-if="showManager" class="border border-zinc-200 rounded-lg p-2 space-y-2 bg-zinc-50">
+            <div v-for="c in categories" :key="c" class="flex items-center gap-1.5 text-sm">
+              <template v-if="editing === c">
+                <input v-model="editName" type="text" class="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-300 rounded-md" @keyup.enter="confirmEdit" />
+                <button class="text-xs px-2 py-1 rounded-md bg-zinc-900 text-white" @click="confirmEdit">บันทึก</button>
+                <button class="text-xs px-2 py-1 rounded-md hover:bg-zinc-200" @click="editing = null">ยกเลิก</button>
+              </template>
+              <template v-else>
+                <span class="flex-1 min-w-0 truncate">{{ c }} <span class="text-xs text-zinc-400">({{ fileCount(c) }})</span></span>
+                <button v-if="c !== FALLBACK" class="text-xs px-1.5 py-1 rounded-md hover:bg-zinc-200" title="เปลี่ยนชื่อ" @click="startEdit(c)">✏</button>
+                <button v-if="c !== FALLBACK" class="text-xs px-1.5 py-1 rounded-md hover:bg-red-100 text-red-600" title="ลบหมวด" @click="removeCategory(c)">🗑</button>
+              </template>
+            </div>
+            <div class="flex gap-1.5 pt-1 border-t border-zinc-200">
+              <input v-model="newCatName" type="text" placeholder="ชื่อหมวดใหม่..." class="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-300 rounded-md bg-white" @keyup.enter="submitNewCategory" />
+              <button class="text-xs px-2.5 py-1 rounded-md bg-zinc-900 text-white" @click="submitNewCategory">+ เพิ่ม</button>
+            </div>
+            <p v-if="catError" class="text-xs text-red-600">{{ catError }}</p>
           </div>
         </div>
 
@@ -256,7 +320,17 @@ const remove = async () => {
           <div class="px-4 py-3 border-b border-zinc-100 flex flex-wrap items-center justify-between gap-2">
             <div class="min-w-0">
               <div class="font-semibold text-zinc-900 truncate">{{ current.title }}</div>
-              <div class="text-xs text-zinc-500">{{ current.category }} • {{ current.fileName }} • {{ formatSize(current.size) }} • {{ formatDate(current.uploadedAt) }}</div>
+              <div class="text-xs text-zinc-500">{{ current.fileName }} • {{ formatSize(current.size) }} • {{ formatDate(current.uploadedAt) }}</div>
+              <label class="mt-1 inline-flex items-center gap-1.5 text-xs text-zinc-500">
+                หมวดหมู่:
+                <select
+                  :value="current.category"
+                  class="px-1.5 py-0.5 text-xs border border-zinc-200 rounded-md bg-white text-zinc-800"
+                  @change="moveFile(current.id, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+                </select>
+              </label>
             </div>
             <div class="flex items-center gap-1.5 text-sm">
               <button class="px-2.5 py-1 rounded-md border" :class="current.pinned ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'" @click="togglePin(current.id)">
