@@ -35,7 +35,7 @@ const SAMPLE_COMMITS: GitCommitItem[] = [
 export const useGitSync = () => {
   const config = useRuntimeConfig()
 
-  const repoUrl = ref<string>('https://github.com/apinan-research/edge-ai-framework')
+  const repoUrl = ref<string>('https://github.com/PhetAPIJKK/research-flow')
   const branch = ref<string>('main')
   const githubToken = ref<string>('')
   const isConnected = ref<boolean>(true)
