@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for build)
-RUN npm ci
+# Install dependencies for building
+RUN npm install
 
 # Copy project source
 COPY . .
@@ -17,7 +17,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # --- Production Runner Stage ---
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
