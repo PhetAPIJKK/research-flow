@@ -5,3 +5,8 @@ dist
 .env
 .DS_Store
 *.local
+
+# AI tool folders
+.agents
+.aider-desk
+skills-lock.json
