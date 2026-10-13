@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const { files, sortedFiles, categories } = useFiles()
+const { files, sortedFiles, notebooks, notebookName } = useFiles()
 
 const pinnedCount = computed(() => files.value.filter(f => f.pinned).length)
 const recent = computed(() => sortedFiles.value.slice(0, 5))
@@ -35,8 +35,8 @@ const recent = computed(() => sortedFiles.value.slice(0, 5))
           <div class="text-xs text-zinc-500 mt-1">📌 ปักหมุด</div>
         </div>
         <div class="bg-white border border-zinc-200 rounded-xl p-5 text-center">
-          <div class="text-3xl font-bold">{{ new Set(files.map(f => f.category)).size }}</div>
-          <div class="text-xs text-zinc-500 mt-1">หมวดหมู่ที่ใช้</div>
+          <div class="text-3xl font-bold">{{ notebooks.length }}</div>
+          <div class="text-xs text-zinc-500 mt-1">Notebook</div>
         </div>
       </div>
 
@@ -57,7 +57,7 @@ const recent = computed(() => sortedFiles.value.slice(0, 5))
             </div>
             <div class="text-xs text-zinc-500">{{ formatSize(f.size) }} • {{ formatDate(f.uploadedAt) }}</div>
           </div>
-          <span class="shrink-0 text-xs px-2 py-0.5 rounded-full bg-white border border-zinc-200 text-zinc-600">{{ f.category }}</span>
+          <span class="shrink-0 text-xs px-2 py-0.5 rounded-full bg-white border border-zinc-200 text-zinc-600">{{ notebookName(f.notebookId) }}</span>
         </NuxtLink>
       </div>
     </template>

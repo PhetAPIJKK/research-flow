@@ -2,6 +2,7 @@
 const route = useRoute()
 const links = [
   { name: 'หน้าหลัก', to: '/' },
+  { name: 'Notebook', to: '/notebooks' },
   { name: 'คลังไฟล์', to: '/files' },
   { name: 'ตั้งค่า', to: '/settings' }
 ]
