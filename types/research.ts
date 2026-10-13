@@ -31,9 +31,12 @@ export interface ResearchPaper {
   authors: string[]
   keywords: string[]
   stageId: string
+  category: string // หมวดหมู่ไฟล์ e.g. 'Draft Manuscript', 'Literature Review', 'Proposal', 'Experiment & Data'
   status: PaperStatus
   version: string
+  isPinned: boolean // สถานะปักหมุด
   fileUrl?: string
+  fileData?: string // Base64 data URL สำหรับเปิดดู PDF ได้ในเว็บโดยตรง
   fileName?: string
   fileSize?: string
   fileType?: string

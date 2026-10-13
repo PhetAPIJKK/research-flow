@@ -1,5 +1,10 @@
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import type { ResearchStage, ResearchPaper, PaperStatus, StageStatus } from '~/types/research'
+
+// Sample minimal valid PDF in Base64 for instant preview
+const SAMPLE_PDF_BASE64_1 = 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCA2MTIgNzkyXS9QYXJlbnQgMiAwIFIvUmVzb3VyY2VzPDwvRm9udDw8L0YxIDQgMCBSPj4+Pi9Db250ZW50cyA1IDAgUj4+ZW5kb2JqCjQgMCBvYmo8PC9UeXBlL0ZvbnQvU3VidHlwZS9UeXBlMS9CYXNlRm9udC9IZWx2ZXRpY2E+PmVuZG9iago1IDAgb2JqPDwvTGVuZ3RoIDg0Pj5zdHJlYW0KQlQKL0YxIDIwIFRmCjcwIDcwMCBUZAooUmVzZWFyY2ggUGFwZXIgUHJldmlldyAtIE51eHQgMykgVGoKL0YxIDEyIFRmCjAgLTMwIFRkCihFZGdlIEFJIEZyYW1ld29yayAmIFBlcmZvcm1hbmNlIEV2YWx1YXRpb24pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTYgMDAwMDAgbiAKMDAwMDAwMDExMSAwMDAwMCBuIAowMDAwMDAwMjM2IDAwMDAwIG4gCjAwMDAwMDAzMDUgMDAwMDAgbiAKdHJhaWxlcjw8L1NpemUgNi9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjQ0MAolJUVPRgo='
+
+const SAMPLE_PDF_BASE64_2 = 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0NvdW50IDEvS2lkc1szIDAgUl0+PmVuZG9iagozIDAgb2JqPDwvVHlwZS9QYWdlL01lZGlhQm94WzAgMCA2MTIgNzkyXS9QYXJlbnQgMiAwIFIvUmVzb3VyY2VzPDwvRm9udDw8L0YxIDQgMCBSPj4+Pi9Db250ZW50cyA1IDAgUj4+ZW5kb2JqCjQgMCBvYmo8PC9UeXBlL0ZvbnQvU3VidHlwZS9UeXBlMS9CYXNlRm9udC9IZWx2ZXRpY2E+PmVuZG9iago1IDAgb2JqPDwvTGVuZ3RoIDkwPj5zdHJlYW0KQlQKL0YxIDIwIFRmCjcwIDcwMCBUZAooVHJhbnNmb3JtZXIgTW9kZWxzIFN1cnZleSkgVGoKL0YxIDEyIFRmCjAgLTMwIFRkCihBbmFseXNpcyBvZiBBdHRlbnRpb24gUHJ1bmluZyBhbmQgU1NNcykgVGoKRVQgZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1NiAwMDAwMCBuIAowMDAwMDAwMTExIDAwMDAwIG4gCjAwMDAwMDAyMzYgMDAwMDAgbiAKMDAwMDAwMDMwNSAwMDAwMCBuIAp0cmFpbGVyPDwvU2l6ZSA2L1Jvb3QgMSAwIFI+PgpzdGFydHhyZWYKNDQ2CiUlRU9GCg=='
 
 const INITIAL_STAGES: ResearchStage[] = [
   {
@@ -180,11 +185,15 @@ const INITIAL_PAPERS: ResearchPaper[] = [
     authors: ['Apinan J.', 'Research Team'],
     keywords: ['Edge AI', 'Model Compression', 'Quantization', 'Real-time System'],
     stageId: 'stage-3',
+    category: 'ร่างบทความวิจัย (Draft Manuscript)',
     status: 'draft',
     version: 'v0.3.1',
+    isPinned: true,
     fileName: 'edge_ai_optimization_draft_v3.pdf',
     fileSize: '2.4 MB',
     fileType: 'application/pdf',
+    fileUrl: SAMPLE_PDF_BASE64_1,
+    fileData: SAMPLE_PDF_BASE64_1,
     gitRepoUrl: 'https://github.com/apinan-research/edge-ai-framework',
     gitBranch: 'main',
     gitCommitHash: '9a8b7c4',
@@ -200,11 +209,15 @@ const INITIAL_PAPERS: ResearchPaper[] = [
     authors: ['Apinan J.'],
     keywords: ['Transformers', 'Literature Review', 'Attention Mechanism', 'Efficiency'],
     stageId: 'stage-2',
+    category: 'การทบทวนวรรณกรรม (Literature Review)',
     status: 'revised',
     version: 'v1.0.0',
+    isPinned: false,
     fileName: 'transformer_survey_final.pdf',
     fileSize: '4.8 MB',
     fileType: 'application/pdf',
+    fileUrl: SAMPLE_PDF_BASE64_2,
+    fileData: SAMPLE_PDF_BASE64_2,
     gitRepoUrl: 'https://github.com/apinan-research/transformer-survey-notes',
     gitBranch: 'main',
     gitCommitHash: '4e2f1a9',
@@ -219,6 +232,7 @@ export const useResearchWorkflow = () => {
   const stages = ref<ResearchStage[]>(INITIAL_STAGES)
   const papers = ref<ResearchPaper[]>(INITIAL_PAPERS)
   const activeStageId = ref<string>('stage-3')
+  const activePaperId = ref<string>('paper-1')
   const isLoaded = ref<boolean>(false)
 
   // Initialize from LocalStorage if available
@@ -231,11 +245,22 @@ export const useResearchWorkflow = () => {
       }
       const savedPapers = localStorage.getItem('research_papers')
       if (savedPapers) {
-        papers.value = JSON.parse(savedPapers)
+        const parsed = JSON.parse(savedPapers)
+        // Ensure new fields exist for backward compatibility
+        papers.value = parsed.map((p: any) => ({
+          ...p,
+          isPinned: p.isPinned ?? false,
+          category: p.category || 'ร่างบทความวิจัย (Draft Manuscript)',
+          fileData: p.fileData || p.fileUrl || SAMPLE_PDF_BASE64_1
+        }))
       }
       const savedActiveStage = localStorage.getItem('research_active_stage')
       if (savedActiveStage) {
         activeStageId.value = savedActiveStage
+      }
+      const savedActivePaper = localStorage.getItem('research_active_paper')
+      if (savedActivePaper) {
+        activePaperId.value = savedActivePaper
       }
     } catch (e) {
       console.warn('Failed to load from local storage:', e)
@@ -250,8 +275,41 @@ export const useResearchWorkflow = () => {
       localStorage.setItem('research_stages', JSON.stringify(stages.value))
       localStorage.setItem('research_papers', JSON.stringify(papers.value))
       localStorage.setItem('research_active_stage', activeStageId.value)
+      localStorage.setItem('research_active_paper', activePaperId.value)
     } catch (e) {
       console.error('Failed to persist to localStorage', e)
+    }
+  }
+
+  // Sorted papers: Pinned first, then by updatedAt descending
+  const sortedPapers = computed(() => {
+    return [...papers.value].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1
+      if (!a.isPinned && b.isPinned) return 1
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
+  })
+
+  // Distinct categories available in current papers
+  const categories = computed(() => {
+    const defaultCats = [
+      'ร่างบทความวิจัย (Draft Manuscript)',
+      'การทบทวนวรรณกรรม (Literature Review)',
+      'โครงร่างวิจัย (Research Proposal)',
+      'ผลการทดลองและชุดข้อมูล (Experiment & Data)',
+      'บทความฉบับตีพิมพ์ (Published Paper)',
+      'เอกสารอื่นๆ (Other)'
+    ]
+    const customCats = papers.value.map(p => p.category).filter(Boolean)
+    return Array.from(new Set([...defaultCats, ...customCats]))
+  })
+
+  // Toggle Pin for a paper
+  const togglePin = (paperId: string) => {
+    const paper = papers.value.find(p => p.id === paperId)
+    if (paper) {
+      paper.isPinned = !paper.isPinned
+      persist()
     }
   }
 
@@ -280,7 +338,6 @@ export const useResearchWorkflow = () => {
     const item = stage.checklist.find(c => c.id === itemId)
     if (item) {
       item.completed = !item.completed
-      // Auto-update stage status based on completion
       const completedCount = stage.checklist.filter(c => c.completed).length
       if (completedCount === stage.checklist.length) {
         stage.status = 'completed'
@@ -293,7 +350,6 @@ export const useResearchWorkflow = () => {
     }
   }
 
-  // Update stage status explicitly
   const setStageStatus = (stageId: string, status: StageStatus) => {
     const stage = stages.value.find(s => s.id === stageId)
     if (stage) {
@@ -308,10 +364,13 @@ export const useResearchWorkflow = () => {
     const newPaper: ResearchPaper = {
       ...paper,
       id: `paper-${Date.now()}`,
+      category: paper.category || 'ร่างบทความวิจัย (Draft Manuscript)',
+      isPinned: paper.isPinned ?? false,
       uploadedAt: now,
       updatedAt: now
     }
     papers.value.unshift(newPaper)
+    activePaperId.value = newPaper.id
     persist()
     return newPaper
   }
@@ -330,25 +389,32 @@ export const useResearchWorkflow = () => {
 
   const deletePaper = (paperId: string) => {
     papers.value = papers.value.filter(p => p.id !== paperId)
+    if (activePaperId.value === paperId && papers.value.length > 0) {
+      activePaperId.value = papers.value[0].id
+    }
     persist()
   }
 
-  // Reset to default data
   const resetToDefault = () => {
     stages.value = JSON.parse(JSON.stringify(INITIAL_STAGES))
     papers.value = JSON.parse(JSON.stringify(INITIAL_PAPERS))
     activeStageId.value = 'stage-3'
+    activePaperId.value = 'paper-1'
     persist()
   }
 
   return {
     stages,
     papers,
+    sortedPapers,
+    categories,
     activeStageId,
+    activePaperId,
     overallProgress,
     isLoaded,
     init,
     persist,
+    togglePin,
     getStageProgress,
     toggleChecklistItem,
     setStageStatus,
