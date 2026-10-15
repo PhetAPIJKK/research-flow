@@ -2,11 +2,13 @@
 import { ref } from 'vue'
 import type { ResearchFile } from '~/types/research'
 import { newId } from '~/composables/useWorkflow'
+import { GUIDELINES } from '~/composables/useResearchGuidelines'
 
 const props = defineProps<{
   step: {
     status: string
     linked: string[]
+    dod?: string[]
     data: {
       runs: { id: string; name: string; date: string; params: string; result: string; main: boolean }[]
       table: { cols: string[]; rows: string[][] }
@@ -100,10 +102,28 @@ const removeChart = async (assetId: string, index: number) => {
   }
   props.step.data.charts.splice(index, 1)
 }
+
+const handleInsertTemplate = () => {
+  const t = GUIDELINES.results.template
+  if (t) {
+    props.step.data.runs = t.runs.map((r: any) => ({ ...r, id: newId() }))
+    props.step.data.table = JSON.parse(JSON.stringify(t.table))
+    props.step.data.ablation = t.ablation
+    props.step.data.discussion = t.discussion
+  }
+}
 </script>
 
 <template>
   <div class="space-y-6">
+    <!-- Guideline & Mindset Accordion -->
+    <WorkspaceGuidelineAccordion
+      step-key="results"
+      :completed-dod-ids="step.dod"
+      @update:completed-dod-ids="step.dod = $event"
+      @insert-template="handleInsertTemplate"
+    />
+
     <!-- Experiment Iteration Log -->
     <div class="space-y-2.5">
       <div class="flex items-center justify-between">

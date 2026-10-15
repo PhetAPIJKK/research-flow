@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import type { ResearchFile } from '~/types/research'
 import { newId } from '~/composables/useWorkflow'
+import { GUIDELINES } from '~/composables/useResearchGuidelines'
 
 const props = defineProps<{
   step: {
     status: string
     linked: string[]
+    dod?: string[]
     data: {
       statement: string
       gap: string
@@ -27,10 +29,27 @@ const addRq = () => {
 const removeRq = (index: number) => {
   props.step.data.rqs.splice(index, 1)
 }
+
+const handleInsertTemplate = () => {
+  const t = GUIDELINES.problem.template
+  if (t) {
+    props.step.data.statement = t.statement
+    props.step.data.gap = t.gap
+    props.step.data.rqs = t.rqs.map((q: any) => ({ ...q, id: newId() }))
+  }
+}
 </script>
 
 <template>
   <div class="space-y-5">
+    <!-- Guideline & Mindset Accordion -->
+    <WorkspaceGuidelineAccordion
+      step-key="problem"
+      :completed-dod-ids="step.dod"
+      @update:completed-dod-ids="step.dod = $event"
+      @insert-template="handleInsertTemplate"
+    />
+
     <!-- Problem Statement -->
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">

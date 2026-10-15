@@ -1,4 +1,5 @@
 import { reactive, ref, watch } from 'vue'
+import { GUIDELINES } from './useResearchGuidelines'
 
 export type StepStatus = 'not_started' | 'in_progress' | 'under_review' | 'completed'
 
@@ -21,25 +22,48 @@ export const STEPS = [
 const KEY = 'rf_wf_'
 const SAVE_DELAY = 2000
 
-const step = (data: Record<string, any>) => ({ status: 'not_started' as StepStatus, linked: [] as string[], data })
+const step = (data: Record<string, any>) => ({
+  status: 'not_started' as StepStatus,
+  linked: [] as string[],
+  dod: [] as string[],
+  data
+})
 
 export const newId = () => Math.random().toString(36).slice(2, 9)
 
 const defaults = () => ({
   steps: {
-    problem: step({ statement: '', gap: '', rqs: [] as { id: string; text: string }[] }),
-    objective: step({ objectives: [] as { id: string; text: string; done: boolean }[], scope: '' }),
-    method: step({ images: [] as string[], blocks: [] as { id: string; title: string; body: string }[] }),
+    problem: step({
+      statement: '',
+      gap: '',
+      rqs: [] as { id: string; text: string }[]
+    }),
+    objective: step({
+      objectives: [] as { id: string; text: string; done: boolean; linkedRq?: string }[],
+      hypothesis: '',
+      scopeIn: '',
+      scopeOut: '',
+      contributions: '',
+      scope: ''
+    }),
+    method: step({
+      images: [] as string[],
+      preprocessing: '',
+      blocks: [] as { id: string; title: string; body: string; type?: 'standard' | 'novelty' }[]
+    }),
     setup: step({
       dsName: '', dsSource: '', dsSize: '', dsSplit: '', dsClean: '',
       env: '',
       hyper: [] as { id: string; k: string; v: string }[],
       baselines: [] as { id: string; text: string }[]
     }),
-    metrics: step({ metrics: [] as { id: string; name: string; formula: string; why: string }[] }),
+    metrics: step({
+      successCriteria: '',
+      metrics: [] as { id: string; name: string; formula: string; why: string; type?: 'primary' | 'secondary' }[]
+    }),
     results: step({
       runs: [] as { id: string; name: string; date: string; params: string; result: string; main: boolean }[],
-      table: { cols: ['Method', 'Accuracy', 'F1'], rows: [['Baseline', '', ''], ['Proposed', '', '']] },
+      table: { cols: ['Method', 'Accuracy (%)', 'F1-Score (%)', 'Latency (ms)'], rows: [['Baseline Standard', '', '', ''], ['Proposed Method (Ours)', '', '', '']] },
       charts: [] as string[],
       ablation: '',
       discussion: ''
@@ -111,11 +135,20 @@ export const useWorkflow = () => {
     return store[nbId]
   }
 
-  // overall progress = average of the 6 core steps
+  // overall progress = average of the 6 core steps (combining status and DoD checklist)
   const overallProgress = (nbId: string | null | undefined) => {
     const s = wf(nbId)
     if (!s) return 0
-    const pcts = STEPS.map(st => STATUS_OPTIONS.find(o => o.value === s.steps[st.key].status)?.pct ?? 0)
+    const pcts = STEPS.map(st => {
+      const stepObj = s.steps[st.key]
+      const statusPct = STATUS_OPTIONS.find(o => o.value === stepObj?.status)?.pct ?? 0
+      const guide = GUIDELINES[st.key]
+      const totalDod = guide ? guide.dod.length : 0
+      const doneDod = stepObj?.dod ? stepObj.dod.length : 0
+      const dodPct = totalDod > 0 ? (doneDod / totalDod) * 100 : 0
+      if (statusPct === 0 && dodPct === 0) return 0
+      return Math.min(100, Math.round(statusPct * 0.6 + dodPct * 0.4))
+    })
     return Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length)
   }
 

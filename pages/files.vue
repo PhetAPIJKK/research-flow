@@ -22,6 +22,7 @@ const FALLBACK = FALLBACK_CATEGORY
 // ---------------- UI State & Selection ----------------
 const selectedId = ref<string | null>(null)
 const activeStep = ref<string>('problem')
+const centerView = ref<'pdf' | 'matrix'>('pdf')
 const showQuickNote = ref(true)
 const search = ref('')
 const groupMode = ref<'group' | 'none'>('group')
@@ -679,7 +680,7 @@ const getStatusBadge = (status: StepStatus | string) => {
       ></div>
 
       <!-- ========================================================= -->
-      <!-- PANE 2: CENTER PANE (PDF Viewer & Quick Note) (~40% - 45%) -->
+      <!-- PANE 2: CENTER PANE (PDF Viewer & Matrix) (~40% - 45%)    -->
       <!-- ========================================================= -->
       <section
         class="h-full flex flex-col bg-white overflow-hidden transition-all"
@@ -689,7 +690,51 @@ const getStatusBadge = (status: StepStatus | string) => {
         ]"
         :style="!centerMaximized && !rightMaximized ? { width: centerWidth + '%' } : {}"
       >
-        <template v-if="current">
+        <!-- Center View Switcher Header -->
+        <div class="px-3 py-1.5 border-b border-zinc-200 bg-zinc-100/70 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-1 p-0.5 bg-zinc-200/80 rounded-md">
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center gap-1"
+              :class="centerView === 'pdf' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'"
+              @click="centerView = 'pdf'"
+            >
+              <span>📄</span>
+              <span>อ่าน PDF</span>
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded text-xs font-semibold transition-all flex items-center gap-1"
+              :class="centerView === 'matrix' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-600 hover:text-zinc-900'"
+              @click="centerView = 'matrix'"
+            >
+              <span>📊</span>
+              <span>ตารางเปรียบเทียบ (Matrix)</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="hidden lg:block px-2 py-0.5 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-200/60 text-xs"
+            :title="centerMaximized ? 'ย่อกลับ 3 ส่วน' : 'ขยายเต็มหน้าจอ'"
+            @click="centerMaximized = !centerMaximized"
+          >
+            {{ centerMaximized ? '❐ ย่อ' : '⛶ ขยาย' }}
+          </button>
+        </div>
+
+        <!-- Mode 2: Synthesis Matrix in Center Pane -->
+        <div v-if="centerView === 'matrix'" class="flex-1 overflow-y-auto p-4 bg-zinc-50/40">
+          <WorkspaceModuleMatrix
+            v-if="curWf"
+            :matrix="curWf.matrix"
+            :notebook-files="scopedFiles"
+            @open-file="selectedId = $event; centerView = 'pdf'"
+          />
+        </div>
+
+        <!-- Mode 1: PDF Viewer & Quick Note -->
+        <template v-else-if="current">
           <!-- File Toolbar -->
           <div class="px-3 py-2 border-b border-zinc-200 bg-zinc-50/70 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div class="min-w-0 flex-1">

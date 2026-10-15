@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import type { ResearchFile } from '~/types/research'
 import { newId } from '~/composables/useWorkflow'
+import { GUIDELINES } from '~/composables/useResearchGuidelines'
 
 const props = defineProps<{
   step: {
     status: string
     linked: string[]
+    dod?: string[]
     data: {
       dsName: string
       dsSource: string
@@ -41,10 +43,32 @@ const addBaseline = () => {
 const removeBaseline = (index: number) => {
   props.step.data.baselines.splice(index, 1)
 }
+
+const handleInsertTemplate = () => {
+  const t = GUIDELINES.setup.template
+  if (t) {
+    props.step.data.dsName = t.dsName
+    props.step.data.dsSource = t.dsSource
+    props.step.data.dsSize = t.dsSize
+    props.step.data.dsSplit = t.dsSplit
+    props.step.data.dsClean = t.dsClean
+    props.step.data.env = t.env
+    props.step.data.hyper = t.hyper.map((h: any) => ({ ...h, id: newId() }))
+    props.step.data.baselines = t.baselines.map((b: any) => ({ ...b, id: newId() }))
+  }
+}
 </script>
 
 <template>
   <div class="space-y-5">
+    <!-- Guideline & Mindset Accordion -->
+    <WorkspaceGuidelineAccordion
+      step-key="setup"
+      :completed-dod-ids="step.dod"
+      @update:completed-dod-ids="step.dod = $event"
+      @insert-template="handleInsertTemplate"
+    />
+
     <!-- Dataset Details -->
     <div class="space-y-2.5">
       <label class="text-xs font-semibold text-zinc-800 block">
