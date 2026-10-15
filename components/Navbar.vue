@@ -9,19 +9,20 @@ const links = [
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 border-b border-zinc-200 bg-white/90 backdrop-blur">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-      <NuxtLink to="/" class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center text-sm font-bold">RF</div>
-        <span class="font-semibold text-zinc-900">Research Flow</span>
+  <header class="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur">
+    <div :class="route.path === '/files' ? 'w-full px-3 sm:px-4 h-12 flex items-center justify-between' : 'max-w-7xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between'">
+      <NuxtLink to="/" class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center text-xs font-bold shadow-sm">RF</div>
+        <span class="font-semibold text-zinc-900 text-sm tracking-tight">Research Flow</span>
+        <span class="hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200">v2.0</span>
       </NuxtLink>
       <nav class="flex items-center gap-1">
         <NuxtLink
           v-for="l in links"
           :key="l.to"
           :to="l.to"
-          class="px-3 py-1.5 rounded-md text-sm transition-colors"
-          :class="route.path === l.to ? 'bg-zinc-100 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-50'"
+          class="px-2.5 py-1 rounded-md text-xs sm:text-sm transition-colors"
+          :class="route.path === l.to ? 'bg-zinc-900 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-zinc-100'"
         >
           {{ l.name }}
         </NuxtLink>

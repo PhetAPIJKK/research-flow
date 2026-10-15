@@ -265,12 +265,21 @@ export const useFiles = () => {
     saveFiles()
   }
 
+  // generic binary assets (diagram/chart images) stored beside the files
+  const putAsset = async (blob: Blob) => {
+    const id = `asset-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    await idb('readwrite', s => s.put(blob, id))
+    return id
+  }
+  const deleteAsset = (id: string) => idb('readwrite', s => s.delete(id))
+
   return {
     files, sortedFiles, notebooks, activeNotebookId, activeNotebook,
     init, setActive, notebookName, notebookFileCount, categoriesOf, categoryFileCount,
     addNotebook, renameNotebook, deleteNotebook,
     addCategory, renameCategory, deleteCategory,
-    addFile, getBlob, togglePin, moveFile, moveFileToNotebook, removeFile, clearAll
+    addFile, getBlob, togglePin, moveFile, moveFileToNotebook, removeFile, clearAll,
+    putAsset, getAsset: getBlob, deleteAsset
   }
 }
 
