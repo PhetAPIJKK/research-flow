@@ -2,14 +2,14 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import type { ResearchFile } from '~/types/research'
 import { STEPS, STATUS_OPTIONS, type StepStatus } from '~/composables/useWorkflow'
+import { useFiles, formatSize, formatDate, FALLBACK_CATEGORY } from '~/composables/useFiles'
 
 const route = useRoute()
 const {
   files, sortedFiles, notebooks, activeNotebookId, activeNotebook, setActive,
   notebookName, categoriesOf, categoryFileCount,
   addCategory, renameCategory, deleteCategory,
-  addFile, getBlob, togglePin, moveFile, moveFileToNotebook, removeFile,
-  formatSize, formatDate
+  addFile, getBlob, togglePin, moveFile, moveFileToNotebook, removeFile
 } = useFiles()
 
 const { wf, saveStatus, overallProgress, downloadMarkdown, loadWorkflow } = useWorkflow()

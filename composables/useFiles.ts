@@ -279,7 +279,8 @@ export const useFiles = () => {
     addNotebook, renameNotebook, deleteNotebook,
     addCategory, renameCategory, deleteCategory,
     addFile, getBlob, togglePin, moveFile, moveFileToNotebook, removeFile, clearAll,
-    putAsset, getAsset: getBlob, deleteAsset
+    putAsset, getAsset: getBlob, deleteAsset,
+    formatSize, formatDate
   }
 }
 
